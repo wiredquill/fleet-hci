@@ -4,5 +4,6 @@ metadata:
   name: global-ip-pool
 spec:
   ranges:
-  - rangeStart: 10.9.0.101
+  - subnet: 10.9.0.0/24
+    rangeStart: 10.9.0.101
     rangeEnd: 10.9.0.119
