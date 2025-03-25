@@ -5,8 +5,8 @@ metadata:
 spec:  
   ranges:  
   - subnet: 10.9.0.0/24
-    rangeStart: 10.9.0.100  
-    rangeEnd: 10.9.0.119
+    rangeStart: 10.9.0.90  
+    rangeEnd: 10.9.0.99
   selector:  
     scope:  
     - project: "*"  
