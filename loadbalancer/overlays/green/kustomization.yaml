@@ -1,2 +1,4 @@
 resources:
-  - loadbalancer-ip-zoo.yaml
+  - ../../base
+patchesStrategicMerge:
+  - patch.yaml
