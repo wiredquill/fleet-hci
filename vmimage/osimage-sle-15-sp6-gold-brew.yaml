@@ -16,4 +16,4 @@ spec:
   pvcNamespace: ""
   retry: 3
   sourceType: download
-  url: http://10.0.9.10/images/sle15-sp6-20250215-brew.qcow2
+  url: http://10.9.0.250/images/sle15-sp6-20250215-brew.qcow2
