@@ -2,7 +2,7 @@ apiVersion: harvesterhci.io/v1beta1
 kind: VirtualMachineImage
 metadata:
   annotations:
-    harvesterhci.io/storageClassName: longhorn-lab
+    harvesterhci.io/storageClassName: lab
   name: sle-15-sp6-20250216-brew
   labels:
     harvesterhci.io/image-type: raw_qcow2
