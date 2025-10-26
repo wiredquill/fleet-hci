@@ -1,0 +1,106 @@
+#cloud-config
+debug: True  # Enable debug mode for verbose output
+
+# --- System Configuration Files ---
+write_files:
+  # Disable IPv6 system-wide
+  - path: /etc/sysctl.d/99-disable-ipv6.conf
+    content: |
+      # Disable IPv6
+      net.ipv6.conf.all.disable_ipv6 = 1
+      net.ipv6.conf.default.disable_ipv6 = 1
+      net.ipv6.conf.lo.disable_ipv6 = 1
+
+  # Set inotify limits
+  - path: /etc/sysctl.d/98-inotify.conf
+    content: |
+      fs.inotify.max_user_instances=1024
+
+  # Create system-wide bash settings for all users
+  - path: /etc/bash.bashrc.local
+    permissions: '0644'
+    content: |
+      # System-wide Bash aliases and login commands
+      alias ll='ls -la'
+      alias la='ls -A'
+      alias l='ls -CF'
+      alias k='kubectl'
+
+      # Clear screen and show fastfetch on every new interactive shell
+      if command -v fastfetch &> /dev/null; then
+        clear
+        fastfetch
+      fi
+
+  # Ensure iscsi_tcp module is loaded on boot
+  - path: /etc/modules-load.d/iscsi.conf
+    content: |
+      iscsi_tcp
+
+# --- User and Password Configuration ---
+users:
+  - default
+  - name: sles
+    shell: /bin/bash
+    groups: users
+    lock_passwd: false
+    sudo: ALL=(ALL) NOPASSWD:ALL
+    ssh_authorized_keys:
+      - ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQDrkMfTTDxPafXv+E1olBKCqu3ggaRGeitMaJ5iJHr588Bo2PcPY+xlM5iM1WITNBwUtdotxtIPVv25sijeEB4eCn4Sx/460FB9cbucGMUqZeeMZe++ibziT/5vyDQhIBwEpw3tm5qtd1rLJkdIbq6hyxbkH2lr8RKfEGA9CCCTFeX7CPHHsVx3KXoS2TDceVHEaMaNBSpT1wkUJ26WLnbjYIkeTI2tqWmS/zV2u8wE9hyWsKheXRL3P9Ams+n2t4UmjNb0Xs96hkjHbcl8Pa8dlrOOER9oINWblfbuJR28Q3vlPR/3yLC1JI9o/+Vq92aMRZiA2BMg+uC/vj18GnKwrSJQ1tEt4hnHxwTaMBjBhXuH6AJDL1LxwKMhP8iNHmke/VuIUcjtusRmpDGtVy/Jov506FAN9coWqg0DC7RojwvGaK8SSCHDV6XLZGXg5PuoyiagCRqGsp6Y5FUMtodNLEzvWe3yLS7gOLTEfoddZM9cn+u9jzQVgyqfjT9xUtc= erquill@Erins-MacBook-Pro-2.local
+  - name: erin
+    shell: /bin/bash
+    groups: users
+    lock_passwd: false
+    sudo: ALL=(ALL) NOPASSWD:ALL
+    ssh_authorized_keys:
+      - ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQDrkMfTTDxPafXv+E1lBKCqu3ggaRGeitMaJ5iJHr588Bo2PcPY+xlM5iM1WITNBwUtdotxtIPVv25sijeEB4eCn4Sx/460FB9cbucGMUqZeeMZe++ibziT/5vyDQhIBwEpw3tm5qtd1rLJkdIbq6hyxbkH2lr8RKfEGA9CCCTFeX7CPHHsVx3KXoS2TDceVHEaMaNBSpT1st1wkUJ26WLnbjYIkeTI2tqWmS/zV2u8wE9hyWsKheXRL3P9Ams+n2t4UmjNb0Xs96hkjHbcl8Pa8dlrOOER9oINWblfbuJR28Q3vlPR/3_yLC1JI9o/+Vq92aMRZiA2BMg+uC/vj18GnKwrSJQ1tEt4hnHxwTaMBjBhXuH6AJDL1LxwKMhP8iNHmke/VuIUcjtusRmpDGtVy/Jov506FAN9coWqg0DC7RojwvGaK8SSCHDV6XLZGXg5PuoyiagCRqGsp6Y5FUMtodNLEzvWe3yLS7gOLTEfoddZM9cn+u9jzQVgyqfjT9xUtc= erquill@Erins-MacBook-Pro-2.local
+
+# Set hashed passwords (n0sl33p2b)
+chpasswd:
+  list: |
+    root:$6$SalTsaLt$qzEfb8Z5QsG6iOUHXuUEdS5/0T5uej5nYNcYZQQf99dCdB7l8zVBYGBjw3D9TqnSR4NDNIWxEckOEtmIAUc6n.
+    sles:$6$SalTsaLt$qzEfb8Z5QsG6iOUHXuUEdS5/0T5uej5nYNcYZQQf99dCdB7l8zVBYGBjw3D9TqnSR4NDNIWxEckOEtmIAUc6n.
+    erin:$6$SalTsaLt$qzEfb8Z5QsG6iOUHXuUEdS5/0T5uej5nYNcYZQQf99dCdB7l8zVBYGBjw3D9TqnSR4NDNIWxEckOEtmIAUc6n.
+  expire: False
+
+  # Update packages and enable guest agent
+  - zypper --non-interactive update
+  - systemctl enable --now --no-block qemu-guest-agent.service
+  
+  # Install base packages from repositories
+  - zypper in -y -t pattern yast2_basis 
+  - [ zypper, in, -y, qemu-guest-agent, git-core, bash-completion, vim, nano, nfs-client, xclip, iputils, wget, mc, fastfetch, tree, btop, open-iscsi, cryptsetup, kubernetes1.32-client, curl ]
+
+  # Install Helm (latest)
+  - |
+    echo "Installing Helm..."
+    curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3
+    chmod 700 get_helm.sh
+    ./get_helm.sh
+    rm ./get_helm.sh
+
+  # Install k9s (latest)
+  - |
+    echo "Installing k9s..."
+    K9S_LATEST_URL=$(curl -s "https://api.github.com/repos/derailed/k9s/releases/latest" | grep -Po '"browser_download_url": "\K.*_Linux_amd64\.tar\.gz"' | head -n 1)
+    if [[ -n "$K9S_LATEST_URL" ]]; then
+      wget "$K9S_LATEST_URL" -O k9s.tar.gz
+      tar -xzf k9s.tar.gz -C /usr/local/bin/ k9s
+      rm k9s.tar.gz
+    else
+      echo "Warning: Could not find k9s release."
+    fi
+
+  # --- Final Service and System Configuration ---
+  
+  # Apply all sysctl settings (from write_files)
+  - sysctl --system
+
+  # Enable iSCSI services
+  - systemctl enable --now iscsid.service
+  
+  # Load iSCSI module immediately (also configured in modules-load.d for boot)
+  - modprobe iscsi_tcp
+
+  # Disable Firewall
+  - if systemctl is-active --quiet firewalld.service; then systemctl disable --now firewalld.service; else echo "firewalld not active."; fi
