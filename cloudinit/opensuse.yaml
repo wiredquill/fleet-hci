@@ -63,6 +63,9 @@ chpasswd:
     erin:$6$SalTsaLt$qzEfb8Z5QsG6iOUHXuUEdS5/0T5uej5nYNcYZQQf99dCdB7l8zVBYGBjw3D9TqnSR4NDNIWxEckOEtmIAUc6n.
   expire: False
 
+# --- System Setup and Package Installation ---
+runcmd:
+  
   # Update packages and enable guest agent
   - zypper --non-interactive update
   - systemctl enable --now --no-block qemu-guest-agent.service
