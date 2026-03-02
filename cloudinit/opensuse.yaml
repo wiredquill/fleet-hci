@@ -1,78 +1,76 @@
 #cloud-config
-debug: True
+package_update: true
+package_upgrade: true
 
 write_files:
-  - path: /etc/sysctl.d/99-disable-ipv6.conf
-    content: |
-      net.ipv6.conf.all.disable_ipv6 = 1
-      net.ipv6.conf.default.disable_ipv6 = 1
-      net.ipv6.conf.lo.disable_ipv6 = 1
-
-  - path: /etc/sysctl.d/98-inotify.conf
-    content: |
-      fs.inotify.max_user_instances=1024
-
   - path: /etc/bash.bashrc.local
-    permissions: '0644'
-    content: |
+    permissions: "0644"
+    content: |-
       alias ll='ls -la'
-      alias la='ls -A'
-      alias l='ls -CF'
       alias k='kubectl'
       if [[ $- == *i* ]]; then
-        if command -v fastfetch &> /dev/null; then
-          clear
-          fastfetch
-        fi
+          command -v fastfetch >/dev/null 2>&1 && fastfetch
       fi
+      export KUBECONFIG=/etc/rancher/rke2/rke2.yaml:/etc/rancher/k3s/k3s.yaml
 
-  - path: /etc/modules-load.d/iscsi.conf
-    content: |
-      iscsi_tcp
-
-  - path: /etc/ssh/sshd_config.d/99-disable-motd.conf
-    permissions: '0644'
-    content: |
-      PrintMotd no
+  - path: /etc/sysctl.d/90-k8s-tuning.conf
+    permissions: "0644"
+    content: |-
+      fs.inotify.max_user_instances = 1024
+      fs.inotify.max_user_watches = 524288
+      net.ipv6.conf.all.disable_ipv6 = 1
+      net.ipv6.conf.default.disable_ipv6 = 1
 
 users:
   - default
-  - name: sles
-    groups: users
-    shell: /bin/bash
-    sudo: ALL=(ALL) NOPASSWD:ALL
-    ssh_authorized_keys:
-      - ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQDrkMfTTDxPafXv+E1olBKCqu3ggaRGeitMaJ5iJHr588Bo2PcPY+xlM5iM1WITNBwUtdotxtIPVv25sijeEB4eCn4Sx/460FB9cbucGMUqZeeMZe++ibziT/5vyDQhIBwEpw3tm5qtd1rLJkdIbq6hyxbkH2lr8RKfEGA9CCCTFeX7CPHHsVx3KXoS2TDceVHEaMaNBSpT1wkUJ26WLnbjYIkeTI2tqWmS/zV2u8wE9hyWsKheXRL3P9Ams+n2t4UmjNb0Xs96hkjHbcl8Pa8dlrOOER9oINWblfbuJR28Q3vlPR/3yLC1JI9o/+Vq92aMRZiA2BMg+uC/vj18GnKwrSJQ1tEt4hnHxwTaMBjBhXuH6AJDL1LxwKMhP8iNHmke/VuIUcjtusRmpDGtVy/Jov506FAN9coWqg0DC7RojwvGaK8SSCHDV6XLZGXg5PuoyiagCRqGsp6Y5FUMtodNLEzvWe3yLS7gOLTEfoddZM9cn+u9jzQVgyqfjT9xUtc= erquill@Erins-MacBook-Pro-2.local
   - name: erin
-    groups: users
-    shell: /bin/bash
+    passwd: "$2y$10$M8ZamcBlJG4xMooQSI7M2eAy2vrDrFx4WOG79SrPKjZUU/kDpsRE6"
+    lock_passwd: false 
+    groups: [sudo, wheel]
     sudo: ALL=(ALL) NOPASSWD:ALL
+    shell: /bin/bash
     ssh_authorized_keys:
       - ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQDrkMfTTDxPafXv+E1olBKCqu3ggaRGeitMaJ5iJHr588Bo2PcPY+xlM5iM1WITNBwUtdotxtIPVv25sijeEB4eCn4Sx/460FB9cbucGMUqZeeMZe++ibziT/5vyDQhIBwEpw3tm5qtd1rLJkdIbq6hyxbkH2lr8RKfEGA9CCCTFeX7CPHHsVx3KXoS2TDceVHEaMaNBSpT1wkUJ26WLnbjYIkeTI2tqWmS/zV2u8wE9hyWsKheXRL3P9Ams+n2t4UmjNb0Xs96hkjHbcl8Pa8dlrOOER9oINWblfbuJR28Q3vlPR/3yLC1JI9o/+Vq92aMRZiA2BMg+uC/vj18GnKwrSJQ1tEt4hnHxwTaMBjBhXuH6AJDL1LxwKMhP8iNHmke/VuIUcjtusRmpDGtVy/Jov506FAN9coWqg0DC7RojwvGaK8SSCHDV6XLZGXg5PuoyiagCRqGsp6Y5FUMtodNLEzvWe3yLS7gOLTEfoddZM9cn+u9jzQVgyqfjT9xUtc= erquill@Erins-MacBook-Pro-2.local
 
-chpasswd:
-  list: |
-    root:$6$SalTsaLt$qzEfb8Z5QsG6iOUHXuUEdS5/0T5uej5nYNcYZQQf99dCdB7l8zVBYGBjw3D9TqnSR4NDNIWxEckOEtmIAUc6n.
-    sles:$6$SalTsaLt$qzEfb8Z5QsG6iOUHXuUEdS5/0T5uej5nYNcYZQQf99dCdB7l8zVBYGBjw3D9TqnSR4NDNIWxEckOEtmIAUc6n.
-    erin:$6$SalTsaLt$qzEfb8Z5QsG6iOUHXuUEdS5/0T5uej5nYNcYZQQf99dCdB7l8zVBYGBjw3D9TqnSR4NDNIWxEckOEtmIAUc6n.
-  expire: False
+packages:
+  - fastfetch
+  - curl
+  - git
+  - bash-completion
+  - vim
+  - nano
+  - iputils
+  - wget
+  - mc
+  - tree
+  - bat
+  - btop
+  - open-iscsi
+  - cryptsetup
+  - qemu-guest-agent
 
 runcmd:
-  # 1. System Updates
-  - zypper --non-interactive update
-  - zypper --non-interactive in -t pattern yast2_basis
-  - zypper --non-interactive in qemu-guest-agent git-core bash-completion vim nano nfs-client xclip iputils wget mc fastfetch tree btop open-iscsi cryptsetup kubernetes1.32-client curl
-
-  # 2. Helm & k9s
-  - |
-    curl -fsSL https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
-    K9S_URL=$(curl -s https://api.github.com/repos/derailed/k9s/releases/latest | grep -Po '"browser_download_url": "\K.*_Linux_amd64\.tar\.gz' | head -n 1)
-    wget "$K9S_URL" -O k9s.tar.gz && tar -xzf k9s.tar.gz -C /usr/local/bin/ k9s && rm k9s.tar.gz
-
-  # 3. Infrastructure Config
+  # 1. Install Latest Tools via Curl (Bypassing Zypper for newer versions)
+  # Install kubectl (Stable)
+  - curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
+  - install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl
+  
+  # Install Helm (Latest)
+  - curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
+  
+  # Install K9s (Latest via GitHub)
+  - export K9S_VERSION=$(curl -s https://api.github.com/repositories/173371755/releases/latest | grep tag_name | cut -d '"' -f 4)
+  - curl -L -o k9s.tar.gz https://github.com/derailed/k9s/releases/download/${K9S_VERSION}/k9s_Linux_amd64.tar.gz
+  - tar -xzf k9s.tar.gz && install -m 0755 k9s /usr/local/bin/k9s && rm k9s.tar.gz
+  
+  # 2. System Configuration
   - sysctl --system
-  - systemctl enable --now qemu-guest-agent iscsid
+  - firewall-cmd --permanent --add-port=6443/tcp
+  - firewall-cmd --permanent --zone=trusted --add-source=10.42.0.0/16
+  - firewall-cmd --permanent --zone=trusted --add-source=10.43.0.0/16
+  - firewall-cmd --reload
+  
+  # 3. Enable Services
   - modprobe iscsi_tcp
-  - [ sh, -c, "grep -q 'Include /etc/ssh/sshd_config.d/*.conf' /etc/ssh/sshd_config || echo 'Include /etc/ssh/sshd_config.d/*.conf' >> /etc/ssh/sshd_config" ]
-  - systemctl restart sshd
-  - if systemctl is-active --quiet firewalld.service; then systemctl disable --now firewalld.service; fi
+  - systemctl enable --now iscsid
+  - systemctl enable --now qemu-guest-agent
