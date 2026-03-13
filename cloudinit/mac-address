@@ -1,0 +1,8 @@
+network:
+  version: 1
+  config:
+    - type: physical
+      name: eth0
+      # Add the MAC address here
+      mac_address: 'aa:bb:cc:dd:ee:ff' 
+      
